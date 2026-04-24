@@ -9,8 +9,8 @@ def main():
     # Step 1: Load + Merge
     df = load_and_merge_data()
 
-    # Step 2: Save merged dataset
-    save_merged_data(df)
+    # Step 2: Save (chọn mode an toàn)
+    save_merged_data(df, mode="sample")  #KHÔNG dùng "full"
 
     print("===== DONE =====")
 
