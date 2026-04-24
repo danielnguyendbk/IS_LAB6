@@ -1,0 +1,5 @@
+data/*.csv
+models/*.pkl
+outputs/figures/
+__pycache__/
+.venv/
