@@ -18,3 +18,14 @@ def handle_missing_values(df):
     df[numeric_cols] = df[numeric_cols].fillna(df[numeric_cols].median())
     
     return df
+
+def drop_duplicates_and_zero_variance(df):
+    """
+    Xóa các dòng dữ liệu trùng lặp và các cột có phương sai bằng 0.
+    """
+    df = df.drop_duplicates()
+
+    cols_to_keep = df.nunique() > 1
+    df = df.loc[:, cols_to_keep]
+    
+    return df
