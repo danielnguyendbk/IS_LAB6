@@ -1,0 +1,4 @@
+[ALERT] 2026-05-01 23:52:42 | Suspicious traffic detected: DDoS | Dst Port: N/A | Protocol: 17 | Confidence: 60.0%
+[ALERT] 2026-05-01 23:52:42 | Suspicious traffic detected: DDoS | Dst Port: N/A | Protocol: 17 | Confidence: 56.0%
+[ALERT] 2026-05-01 23:52:42 | Suspicious traffic detected: DDoS | Dst Port: N/A | Protocol: 0 | Confidence: 52.0%
+[ALERT] 2026-05-01 23:52:42 | Suspicious traffic detected: DDoS | Dst Port: N/A | Protocol: 17 | Confidence: 52.0%
