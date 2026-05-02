@@ -4,3 +4,6 @@ outputs/figures/
 __pycache__/
 .venv/
 venv/
+outputs/reports/merged_dataset.csv
+outputs/reports/merged_head.csv
+outputs/reports/preprocessed_dataset.csv
