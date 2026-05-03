@@ -16,8 +16,6 @@ def balance_data(X, y):
     """
     Nhiệm vụ: Vừa Under-sampling lớp BENIGN, vừa SMOTE các lớp thiểu số.
     """
-    # 1. Giảm bớt lớp BENIGN (vì nó quá nhiều, chiếm đa số)
-    # feat: apply RandomUnderSampler for BENIGN class
     rus = RandomUnderSampler(sampling_strategy='not minority', random_state=42)
     X_res, y_res = rus.fit_resample(X, y)
     
