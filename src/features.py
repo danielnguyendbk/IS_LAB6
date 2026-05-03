@@ -12,5 +12,4 @@ def select_core_features(df):
         'ACK Flag Cnt', 'FIN Flag Cnt', 'RST Flag Cnt',
         'PSH Flag Cnt', 'URG Flag Cnt'
     ]
-    # Chỉ lấy những cột có trong danh sách trên
     return df[selected_features]
