@@ -13,7 +13,6 @@ def load_single_file(file_path):
 
     return df
 
-
 def load_and_merge_data():
     dataframes = []
 
