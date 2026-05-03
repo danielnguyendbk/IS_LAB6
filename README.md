@@ -1,4 +1,4 @@
-# Network Intrusion Detection System (NIDS) using Machine Learning
+# Network Intrusion Detection System (NIDS) using Machine Learning GROUP15
 
 ## Project overview
 
