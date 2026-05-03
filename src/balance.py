@@ -1,22 +1,29 @@
-from sklearn.preprocessing import LabelEncoder
+from sklearn.preprocessing import StandardScaler
 from imblearn.over_sampling import SMOTE
 from imblearn.under_sampling import RandomUnderSampler
+import pandas as pd
 
-def encode_labels(y):
+def scale_features(X_train, X_test):
     """
-    Đổi tên cuộc tấn công (chữ) thành số (0, 1, 2...).
+    feat: add feature scaling with StandardScaler
     """
-    le = LabelEncoder()
-    return le.fit_transform(y), le
+    scaler = StandardScaler()
+    X_train_scaled = scaler.fit_transform(X_train)
+    X_test_scaled = scaler.transform(X_test)
+    return X_train_scaled, X_test_scaled, scaler
 
-def get_balancing_steps():
+def balance_data(X, y):
     """
-    Tạo các bước cân bằng dữ liệu để ném vào Pipeline.
+    Nhiệm vụ: Vừa Under-sampling lớp BENIGN, vừa SMOTE các lớp thiểu số.
     """
-    # SMOTE: Tự tạo thêm dữ liệu cho các lớp tấn công thiểu số (đạt 10% lớp đa số)
-    over = SMOTE(sampling_strategy=0.1) 
+    # 1. Giảm bớt lớp BENIGN (vì nó quá nhiều, chiếm đa số)
+    # feat: apply RandomUnderSampler for BENIGN class
+    rus = RandomUnderSampler(sampling_strategy='not minority', random_state=42)
+    X_res, y_res = rus.fit_resample(X, y)
     
-    # RandomUnderSampler: Cắt bớt dữ liệu BENIGN (truy cập bình thường)
-    under = RandomUnderSampler(sampling_strategy=0.5) 
+    # 2. Tăng cường các lớp tấn công bằng SMOTE
+    # feat: apply SMOTE for minority classes
+    smote = SMOTE(sampling_strategy='auto', random_state=42)
+    X_final, y_final = smote.fit_resample(X_res, y_res)
     
-    return over, under
+    return X_final, y_final
