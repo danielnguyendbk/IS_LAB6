@@ -5,8 +5,9 @@ import os
 # Root directory
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-# Data folder
+# Data folders
 DATA_DIR = os.path.join(BASE_DIR, "data")
+DATA_RAW_DIR = os.path.join(DATA_DIR, "raw")
 
 # List of 8 CSV files (bạn sửa lại đúng tên file)
 DATA_FILES = [
@@ -21,4 +22,4 @@ DATA_FILES = [
 ]
 
 # Output merged file
-MERGED_FILE = os.path.join(DATA_DIR, "merged_data.csv")
+MERGED_FILE = os.path.join(DATA_DIR, "merged_dataset.csv")

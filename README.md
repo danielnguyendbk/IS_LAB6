@@ -17,15 +17,22 @@ This project implements a real-time Network Intrusion Detection System (NIDS) us
 - Challenge: Highly imbalanced dataset
 
 Note: The dataset is not included in this repository due to size.
+Because CIC-IDS2017 is large, this project trains and evaluates on a sampled subset
+for quick and reproducible runs on lab machines.
+
+Feature note:
+- The Lab 6 spec lists 18 core features including `Protocol`.
+- The CIC-IDS2017 CSV version used in this project does not include `Protocol`.
+- We do not fabricate `Protocol`; the pipeline falls back to the remaining 17 core features.
 
 ### How to use the dataset
 
 1. Download the dataset from the link above
 2. Extract all CSV files
-3. Place them into the `data/` folder:
+3. Place them into the `data/raw/` folder:
 
 ```text
-data/
+data/raw/
 ├── Friday-WorkingHours-Afternoon-DDos.pcap_ISCX.csv
 ├── Friday-WorkingHours-Afternoon-PortScan.pcap_ISCX.csv
 ├── Friday-WorkingHours-Morning.pcap_ISCX.csv
@@ -41,9 +48,11 @@ data/
 ```text
 Network-Intrusion-DetectionML/
 │
-├── data/                  # Dataset CSV files (ignored in Git)
+├── data/                  # Dataset files (ignored in Git)
+│   ├── raw/               # 8 CSV files from CIC-IDS2017
+│   └── merged_dataset.csv # Optional merged dataset fallback
 ├── models/                # Saved models (.pkl)
-├── ouputs/                # Results, plots, reports
+├── outputs/               # Results, plots, reports
 │   ├── figures/
 │   └── reports/
 ├── src/
@@ -69,7 +78,7 @@ Network-Intrusion-DetectionML/
 ```text
 Raw CSV files (8 files)
        ↓
-  data_loader.py   -> Merge into 1 DataFrame
+       data_loader.py   -> Load raw CSVs or use merged dataset fallback
        ↓
 preprocessing.py   -> Clean, handle NaN/inf, deduplicate, downcast
        ↓
@@ -81,7 +90,7 @@ preprocessing.py   -> Clean, handle NaN/inf, deduplicate, downcast
        ↓
 pipeline_builder.py -> Assemble imblearn Pipeline
        ↓
- train_models.py   -> Train 5 ML models
+ train_models.py   -> Train 5 ML models (sampled subset)
        ↓
   evaluate.py      -> Classification reports, confusion matrices
        ↓
@@ -98,24 +107,44 @@ pip install -r requirements.txt
 
 ## Usage
 
+Quick checks (no training):
+
 ```bash
-python main.py
+python quick_test.py
 ```
+
+Train/evaluate on a sampled subset:
+
+```bash
+python main.py --quick
+python main.py --sample-size 10000
+```
+
+If you run without arguments, the pipeline still uses a default sampled subset
+and prints the sample size being used.
 
 ### Outputs
 
-- Merged dataset: `ouputs/reports/merged_dataset.csv`
-- Preprocessed dataset: `ouputs/reports/preprocessed_dataset.csv`
-- Dataset preview: `ouputs/reports/merged_head.csv`
-- Figures: `ouputs/figures/`
-- Evaluation reports: `ouputs/reports/`
-- Model comparison: `ouputs/reports/model_comparison.csv`
+- Figures: `outputs/figures/`
+- Evaluation reports: `outputs/reports/`
+- Preprocessed dataset (sampled): `outputs/reports/preprocessed_dataset.csv`
+- Model comparison: `outputs/reports/model_comparison.csv`
 - Saved model bundle: `models/best_model.pkl`
 - Alert log: `alerts.log`
 
+Note: The outputs already present in the repository are trained from a sampled
+subset for quick reproduction. Re-running the code will overwrite or regenerate
+outputs in the same format.
+
+Data loading priority:
+1. `data/raw/` (8 CSV files)
+2. `data/merged_dataset.csv`
+3. `outputs/reports/merged_dataset.csv`
+
 ## Results
 
-The following metrics are from `ouputs/reports/model_comparison.csv` (weighted averages):
+The following metrics are from `outputs/reports/model_comparison.csv` (weighted averages),
+computed on a sampled subset for reproducibility:
 
 | Model | Accuracy | Precision | Recall | F1-score |
 |-------|----------|-----------|--------|----------|
@@ -127,7 +156,7 @@ The following metrics are from `ouputs/reports/model_comparison.csv` (weighted a
 
 Best model: Random Forest (highest weighted F1-score and recall).
 
-Per-class classification reports are saved in `ouputs/reports/`:
+Per-class classification reports are saved in `outputs/reports/`:
 
 - classification_report_Random_Forest.txt
 - classification_report_KNN.txt

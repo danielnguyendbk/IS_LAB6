@@ -1,53 +1,113 @@
-from src.data_loader import load_and_merge_data, save_merged_data
+import argparse
+import os
+import sys
+
+PROJECT_ROOT = os.path.dirname(os.path.abspath(__file__))
+if PROJECT_ROOT not in sys.path:
+  sys.path.insert(0, PROJECT_ROOT)
+
+if "src" in sys.modules:
+  del sys.modules["src"]
+
+from sklearn.model_selection import train_test_split
+
+from src.data_loader import load_and_merge_data
+from src.preprocessing import run_preprocessing
+from src.eda import run_eda
+from src.train_models import train_and_evaluate_models
+from validate_dataset import validate_dataframe
+
+
+DEFAULT_SAMPLE_SIZE = 20000
+QUICK_SAMPLE_SIZE = 10000
+RANDOM_STATE = 42
+
+
+def _sample_dataframe(df, sample_size, random_state=RANDOM_STATE):
+  if sample_size is None or sample_size <= 0:
+    return df
+  if sample_size >= len(df):
+    print(f"[INFO] sample_size >= dataset size ({len(df)}). Using full data.")
+    return df
+
+  stratify = df["Label"] if "Label" in df.columns else None
+  _, df_sampled = train_test_split(
+    df,
+    test_size=sample_size,
+    stratify=stratify,
+    random_state=random_state,
+  )
+  return df_sampled
+
+
+def _ensure_output_dirs():
+  os.makedirs("outputs/reports", exist_ok=True)
+  os.makedirs("outputs/figures", exist_ok=True)
+  os.makedirs("models", exist_ok=True)
 
 
 def main():
-    print("===== IDS PIPELINE START =====")
+  parser = argparse.ArgumentParser(
+    description="NIDS pipeline with sampled training (CIC-IDS2017)."
+  )
+  parser.add_argument(
+    "--quick",
+    action="store_true",
+    help=f"Use quick mode with sample size {QUICK_SAMPLE_SIZE}.",
+  )
+  parser.add_argument(
+    "--sample-size",
+    type=int,
+    default=None,
+    help="Number of samples to use for training/evaluation.",
+  )
 
-    # Step 1: Load + Merge full dataset
+  args = parser.parse_args()
+
+  sample_size = args.sample_size
+  if args.quick and sample_size is None:
+    sample_size = QUICK_SAMPLE_SIZE
+  if sample_size is None:
+    sample_size = DEFAULT_SAMPLE_SIZE
+
+  print("===== IDS PIPELINE START =====")
+  print(f"[INFO] Using sample size: {sample_size} (random_state={RANDOM_STATE})")
+
+  _ensure_output_dirs()
+
+  # Step 1: Load + Merge full dataset
+  try:
     df = load_and_merge_data()
+  except FileNotFoundError as error:
+    print(f"[ERROR] {error}")
+    print("[INFO] Please add the CIC-IDS2017 CSV files to data/ and retry.")
+    return
 
-    # Step 2: (OPTIONAL) Save full dataset
-    save_merged_data(df)
+  print("[DEBUG] Protocol before preprocessing:", "Protocol" in df.columns)
 
-    print("===== DATA READY FOR NEXT MODULES =====")
+  # Step 2: Preprocess
+  df = run_preprocessing(df)
+
+  print("[DEBUG] Protocol after preprocessing:", "Protocol" in df.columns)
+
+  if not validate_dataframe(df, source_label="preprocessed dataset"):
+    print("[ERROR] Dataset validation failed. Please fix the missing columns.")
+    return
+
+  # Step 3: Sample for quick/reproduce mode
+  df_sampled = _sample_dataframe(df, sample_size)
+
+  # Step 4: Save preprocessed sampled data for reference
+  df_sampled.to_csv("outputs/reports/preprocessed_dataset.csv", index=False)
+
+  # Step 5: EDA (on sampled data)
+  run_eda(df_sampled)
+
+  # Step 6: Train + Evaluate models (on sampled data)
+  train_and_evaluate_models(df_sampled, random_state=RANDOM_STATE)
+
+  print("===== IDS PIPELINE COMPLETE =====")
 
 
 if __name__ == "__main__":
-    main()
-
-# ─────────────────────────────────────────────────────────────
-# STEP: Real-time Alert System (Thành - Người 5)
-# ─────────────────────────────────────────────────────────────
-from src.realtime_alert import (
-    save_best_model,
-    load_best_model,
-    run_realtime_demo
-)
-
-def run_realtime_phase(best_model, label_encoder, scaler):
-    """
-    Call this after the training phase is complete and you have:
-      - best_model: the trained Random Forest classifier
-      - label_encoder: the fitted LabelEncoder from balance.py
-      - scaler: the fitted StandardScaler from pipeline_builder.py
-
-    This function will:
-      1. Save the model to models/best_model.pkl
-      2. Load it back (to verify it works)
-      3. Run a 5-flow real-time demo and write alerts to alerts.log
-    """
-    print("\n[STEP 6] Saving best model...")
-    save_best_model(best_model, label_encoder, scaler)
-
-    print("[STEP 6] Loading model back for verification...")
-    model_bundle = load_best_model()
-
-    print("[STEP 6] Running real-time demo...")
-    run_realtime_demo(model_bundle, n_samples=5, write_to_log=True)
-
-# NOTE TO TEAMMATES (Thái - Người 4):
-# After you train Random Forest, call:
-#   run_realtime_phase(rf_model, label_encoder, scaler)
-# from your section in main.py, OR just call it directly below
-# if main.py runs everything sequentially.
+  main()
