@@ -1,5 +1,7 @@
-import pandas as pd
 import numpy as np
+import pandas as pd
+
+from src.features import SELECTED_FEATURES
 
 def clean_column_names(df):
     """
@@ -25,8 +27,19 @@ def drop_duplicates_and_zero_variance(df):
     """
     df = df.drop_duplicates()
 
-    cols_to_keep = df.nunique() > 1
-    df = df.loc[:, cols_to_keep]
+    protected_columns = set(SELECTED_FEATURES + ["Label"])
+
+    for col in SELECTED_FEATURES:
+        if col in df.columns and df[col].nunique(dropna=False) <= 1:
+            print(f"[WARNING] Selected feature has <= 1 unique value: {col}")
+
+    zero_variance_cols = [
+        col
+        for col in df.columns
+        if col not in protected_columns and df[col].nunique(dropna=False) <= 1
+    ]
+    if zero_variance_cols:
+        df = df.drop(columns=zero_variance_cols)
     
     return df
 

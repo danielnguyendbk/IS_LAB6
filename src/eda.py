@@ -12,7 +12,14 @@ def plot_attack_distribution(df):
     """
     plt.figure(figsize=(12, 6))
 
-    sns.countplot(data=df, x='Label', order=df['Label'].value_counts().index, palette='viridis')
+    sns.countplot(
+        data=df,
+        x='Label',
+        hue='Label',
+        order=df['Label'].value_counts().index,
+        palette='viridis',
+        legend=False,
+    )
     
     plt.title('Distribution of Attack Classes')
     plt.xlabel('Class Label')

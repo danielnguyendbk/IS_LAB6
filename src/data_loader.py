@@ -1,6 +1,8 @@
-import pandas as pd
 import os
-from src.config import DATA_DIR, DATA_FILES, MERGED_FILE
+
+import pandas as pd
+
+from src.config import DATA_FILES, DATA_RAW_DIR, MERGED_FILE
 
 
 def load_single_file(file_path):
@@ -14,31 +16,56 @@ def load_single_file(file_path):
     return df
 
 
-def load_and_merge_data():
-    dataframes = []
+def _load_merged_fallback(path, label):
+    if os.path.exists(path):
+        print(f"[INFO] Using {label}: {path}")
+        return load_single_file(path)
+    return None
 
-    for file in DATA_FILES:
-        file_path = os.path.join(DATA_DIR, file)
 
-        if not os.path.exists(file_path):
-            print(f"[WARNING] File not found: {file_path}")
-            continue
+def merge_raw_csvs(output_path=MERGED_FILE):
+    raw_paths = [os.path.join(DATA_RAW_DIR, file) for file in DATA_FILES]
+    if not all(os.path.exists(path) for path in raw_paths):
+        return None
 
-        df = load_single_file(file_path)
-        dataframes.append(df)
-
+    dataframes = [load_single_file(path) for path in raw_paths]
     print("[INFO] Merging all files...")
     merged_df = pd.concat(dataframes, ignore_index=True)
-
     print(f"[INFO] Final shape: {merged_df.shape}")
 
+    merged_df.to_csv(output_path, index=False)
+    print(f"[INFO] Saved merged dataset to: {output_path}")
     return merged_df
 
 
-# Save FULL nhưng có kiểm soát (không treo)
-def save_merged_data(df):
-    print("[INFO] Saving merged dataset...")
+def load_and_merge_data():
+    raw_paths = [os.path.join(DATA_RAW_DIR, file) for file in DATA_FILES]
+    if all(os.path.exists(path) for path in raw_paths):
+        return merge_raw_csvs(MERGED_FILE)
 
-    df.to_csv(MERGED_FILE, index=False)
+    if os.path.exists(MERGED_FILE):
+        print(
+            "[INFO] Raw CIC-IDS2017 CSV files not found or incomplete. "
+            "Using data/merged_dataset.csv instead."
+        )
+        merged_df = _load_merged_fallback(MERGED_FILE, "data/merged_dataset.csv")
+        if merged_df is not None:
+            return merged_df
 
-    print(f"[INFO] Saved to: {MERGED_FILE}")
+    reports_merged = os.path.join(
+        os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+        "outputs",
+        "reports",
+        "merged_dataset.csv",
+    )
+    merged_df = _load_merged_fallback(
+        reports_merged,
+        "outputs/reports/merged_dataset.csv",
+    )
+    if merged_df is not None:
+        return merged_df
+
+    raise FileNotFoundError(
+        "No dataset found. Please place the 8 raw CIC-IDS2017 CSV files in data/raw/, "
+        "or provide data/merged_dataset.csv, or outputs/reports/merged_dataset.csv."
+    )
